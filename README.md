@@ -38,7 +38,7 @@ The mod has been used safely on:
 
 ---
 
-<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/c2335ae7-da55-4ce1-adc9-d189aeecab13" />
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/e0131f4c-bf74-468b-b2aa-f1a2eec2b31a" />
 
 ---
 
