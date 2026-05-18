@@ -17,13 +17,30 @@ public abstract class SourceMixin {
     @Final @Shadow private int pointer;
 
     @Inject(method = "play", at = @At("TAIL"))
-    private void shouldMuffle(CallbackInfo ci) {
-        if (!AL.getCapabilities().ALC_EXT_EFX) return;
-        if (Hitreg.shouldMuffle == 0) return;
-        Hitreg.shouldMuffle--;
-        int filter = EXTEfx.alGenFilters();
-        EXTEfx.alFilteri(filter, EXTEfx.AL_FILTER_TYPE, EXTEfx.AL_FILTER_LOWPASS);
-        EXTEfx.alFilterf(filter, EXTEfx.AL_LOWPASS_GAINHF, 1 - Hitreg.muffleAmount);
-        AL10.alSourcei(pointer, EXTEfx.AL_DIRECT_FILTER, filter);
+    private void play(CallbackInfo ci) {
+        if (!AL.getCapabilities().ALC_EXT_EFX || Hitreg.shouldFilter == 0) return;
+        int filter = 0;
+        boolean useFilter = false;
+
+        if (Hitreg.shouldFilter > 0) {
+            Hitreg.shouldFilter--;
+
+            if (Hitreg.muffleAmount != 0) {
+                filter = EXTEfx.alGenFilters();
+                EXTEfx.alFilteri(filter, EXTEfx.AL_FILTER_TYPE, EXTEfx.AL_FILTER_LOWPASS);
+                EXTEfx.alFilterf(filter, EXTEfx.AL_LOWPASS_GAINHF, 1 - Hitreg.muffleAmount);
+                useFilter = true;
+            }
+
+            if (Hitreg.sharpenAmount != 0) {
+                Hitreg.shouldFilter--;
+                filter = EXTEfx.alGenFilters();
+                EXTEfx.alFilteri(filter, EXTEfx.AL_FILTER_TYPE, EXTEfx.AL_FILTER_HIGHPASS);
+                EXTEfx.alFilterf(filter, EXTEfx.AL_HIGHPASS_GAINLF, 1 - Hitreg.sharpenAmount);
+                useFilter = true;
+            }
+        }
+
+        if (useFilter) AL10.alSourcei(pointer, EXTEfx.AL_DIRECT_FILTER, filter);
     }
 }

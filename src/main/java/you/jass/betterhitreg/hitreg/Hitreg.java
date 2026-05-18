@@ -3,12 +3,16 @@ package you.jass.betterhitreg.hitreg;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.sound.PositionedSoundInstance;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.Items;
-import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.shape.VoxelShape;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import you.jass.betterhitreg.settings.Commands;
 import you.jass.betterhitreg.settings.Settings;
 import you.jass.betterhitreg.settings.Toggle;
@@ -21,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 import static you.jass.betterhitreg.utility.MultiVersion.message;
 
 public class Hitreg {
+    private static final Logger log = LoggerFactory.getLogger(Hitreg.class);
     public static MinecraftClient client;
     public static int lastTarget;
     public static LivingEntity target;
@@ -38,23 +43,39 @@ public class Hitreg {
     public static boolean hitByAnother;
     public static boolean targetHasShield;
     public static boolean targetIsBlocking;
+    public static boolean hitWasFarFromPrevious;
     public static RegQueue last100Regs = new RegQueue(100);
     public static Vec3d lastAttackLocation = Vec3d.ZERO;
     public static Vec3d targetLocation = Vec3d.ZERO;
     public static Vec3d previousTargetLocation = Vec3d.ZERO;
     public static long fightStartedAt;
     public static double ground;
+    public static boolean inSky;
+    public static double theirGround;
+    public static boolean theirInSky;
     public static boolean bothAlive;
     public static boolean withinFight;
     public static boolean targetInvisible;
     public static double distance;
+    public static int lastTickHit;
+    public static int lastTickInRange;
+    public static int lastTickOutOfRange;
+    public static int lastTickJumped;
+    public static int lastTickBacked;
+    public static long lastJumpReset;
+    public static long lastPerfectHit;
     public static int playerId;
-    public static int shouldMuffle;
     public static int fightsThisSession;
-    public static float muffleAmount;
     public static long lastNonGhost;
+    public static int shouldFilter;
+    public static float muffleAmount;
+    public static float sharpenAmount;
+    public static int yourSwings;
+    public static int theirSwings;
+    public static int yourHits;
+    public static int theirHits;
+    public static boolean wasSwinging;
     public static boolean tutorialAlreadySeen;
-
 
     public static void tick() {
         if (client.player == null || client.world == null) return;
@@ -74,6 +95,7 @@ public class Hitreg {
         }
 
         muffleAmount = (Math.max(0, Math.min(1, Settings.getFloat("muffle_amount"))));
+        sharpenAmount = (Math.max(0, Math.min(1, Settings.getFloat("sharpen_amount"))));
 
         UIUtils.update();
         updateFightState();
@@ -82,6 +104,36 @@ public class Hitreg {
         boolean movingForward = client.options.forwardKey.isPressed();
         if (movingForward && !wasMovingForward) sprintIsReset = true;
         wasMovingForward = movingForward;
+
+        boolean swinging = client.options.attackKey.isPressed();
+        if (swinging && !wasSwinging) yourSwings++;
+        wasSwinging = swinging;
+
+        if (client.player.timeUntilRegen == 20) lastTickHit = tick;
+        if (bothAlive && client.player.getEyePos().squaredDistanceTo(Render.getClosestPoint(client.player, target)) <= 9) lastTickInRange = tick;
+        else lastTickOutOfRange = tick;
+        if (client.options.jumpKey.isPressed() && client.player.isOnGround()) lastTickJumped = tick;
+        if (client.options.backKey.isPressed()) lastTickBacked = tick;
+
+        //if the last time you were damaged was 5 ticks ago
+        if (tick - lastTickHit == 5) {
+            int jumpReset = lastTickJumped - lastTickHit;
+            if (jumpReset >= -1 && jumpReset <= 1) {
+                //landed
+                lastJumpReset = System.currentTimeMillis();
+            }
+            else if (tick - lastTickBacked > 10 && jumpReset >= -3 && jumpReset <= 3) {
+                //missed
+            }
+        }
+
+        //if youre not fighting clear stats
+        if (!fighting) {
+            yourSwings = 0;
+            theirSwings = 0;
+            yourHits = 0;
+            theirHits = 0;
+        }
 
         //if the fight ended, clear all expected hits to prevent any false ghosts, else remove all unneeded hits naturally
         if (!withinFight) {
@@ -92,7 +144,12 @@ public class Hitreg {
                 if (duration >= 10 && duration <= 600 && lastNonGhost >= fightStartedAt) {
                     fightsThisSession++;
                     Settings.addFight(duration);
-                    if (Toggle.ALERT_FIGHTS.toggled()) message("fight §7took §f" + formatTime(duration) + " §7(#" + fightsThisSession + "/#" + Settings.getInt("total_fights") + ")", "/hitreg alertDelays");
+
+                    if (Toggle.ALERT_FIGHTS.toggled()) {
+                        message("fight §7took §f" + formatTime(duration) + " §7(#" + fightsThisSession + "/#" + Settings.getInt("total_fights") + ")", "/hitreg alertDelays");
+                        if (yourHits != 0 && yourSwings != 0) message("Your §7Accuracy: §f" + Math.round((((float) yourHits / yourSwings) * 100)) + "% §7(" + yourHits + "/" + yourSwings + ")", "");
+                        if (theirHits != 0 && theirSwings != 0) message("Their §7Accuracy: §f" + Math.round((((float) theirHits / theirSwings) * 100)) + "% §7(" + theirHits + "/" + theirSwings + ")", "");
+                    }
                 }
             }
 
@@ -107,8 +164,7 @@ public class Hitreg {
         //if the target moves backwards, they may be taking knockback
         if (targetTakingKnockback() && !alreadyKnockedBack) {
             long knockbackDelay = System.currentTimeMillis() - lastAttack;
-            if (Toggle.ALERT_DELAYS.toggled() && knockbackDelay <= 500)
-                message("knockback §7took at minimum §f" + knockbackDelay + "§7ms", "/hitreg alertDelays");
+            if (Toggle.ALERT_DELAYS.toggled() && knockbackDelay <= 500) message("knockback §7took at minimum §f" + knockbackDelay + "§7ms", "/hitreg alertDelays");
             alreadyKnockedBack = true;
         }
 
@@ -145,22 +201,33 @@ public class Hitreg {
     }
 
     public static void updateGround() {
-        if (client.player.isOnGround()) ground = client.player.getY();
+        if (client.player == null) return;
+
+        ground = getGround(client.player);
+        inSky = ground == Integer.MAX_VALUE;
+
+        if (target != null) {
+            theirGround = getGround(target);
+            theirInSky = theirGround == Integer.MAX_VALUE;
+        }
+    }
+
+    public static double getGround(Entity entity) {
+        if (entity.isOnGround()) return entity.getY();
         else {
-            int x = client.player.getBlockX();
-            int y = client.player.getBlockY();
-            int z = client.player.getBlockZ();
+            int x = entity.getBlockX();
+            int y = entity.getBlockY();
+            int z = entity.getBlockZ();
 
-            for (int i = 1; i <= 3; i++) {
+            for (int i = 0; i <= 3; i++) {
                 int under = y - i;
-                BlockPos checkPos = new BlockPos(x, under, z);
-
-                if (!client.world.isAir(checkPos)) {
-                    ground = under + 1;
-                    break;
-                }
+                BlockPos position = new BlockPos(x, under, z);
+                VoxelShape shape = client.world.getBlockState(position).getCollisionShape(client.world, position);
+                if (!shape.isEmpty()) return under + shape.getMax(Direction.Axis.Y);
             }
         }
+
+        return Integer.MAX_VALUE;
     }
 
     public static int getPing(UUID uuid) {
@@ -182,7 +249,7 @@ public class Hitreg {
     public static boolean isToggled() {
         if (!Toggle.TOGGLE.toggled()) return false;
         if (!withinFight || targetIsBlocking) return false;
-        if (Toggle.SAFE_REGS_ONLY.toggled() && (newTarget || wasGhosted || hitByAnother)) return false;
+        if (Toggle.SAFE_REGS_ONLY.toggled() && (newTarget || wasGhosted || hitByAnother || hitWasFarFromPrevious)) return false;
         if (Toggle.IGNORE_SHIELD_HOLDERS.toggled() && targetHasShield) return false;
         return true;
     }

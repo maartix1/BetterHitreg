@@ -13,6 +13,7 @@ import net.minecraft.client.gui.screen.Screen;
 
 import net.minecraft.text.Text;
 import you.jass.betterhitreg.hitreg.Hitreg;
+import you.jass.betterhitreg.settings.Commands;
 import you.jass.betterhitreg.settings.Settings;
 import you.jass.betterhitreg.settings.Toggle;
 import you.jass.betterhitreg.utility.MultiVersion;
@@ -43,14 +44,14 @@ public class UIScreen extends Screen {
 
         int panelWidthCenter = width / 2;
         int panelHeightCenter = height / 2;
-        int panelWidth  = 350;
-        int panelHeight = 250;
+        int panelWidth = 350;
+        int panelHeight = 260;
         int halfPanelWidth  = panelWidth / 2;
         int halfPanelHeight = panelHeight / 2;
         int column1Start = 160;
         int column2Start = -5;
         int horizontalGap = 145;
-        int rowStart = 125;
+        int rowStart = 132;
         int sliderWidth = 135;
         int sliderStart = 128;
         int sliderGap = 18;
@@ -169,7 +170,7 @@ public class UIScreen extends Screen {
                 panelWidthCenter - column1Start,
                 panelHeightCenter - rowStart + verticalGap * 9,
                 10, horizontalGap,
-                textRenderer, "Alert Fight Durations",
+                textRenderer, "Alert Fight Statistics",
                 checkbox, true,
                 Toggle.ALERT_FIGHTS.toggled(),
                 checked -> Toggle.ALERT_FIGHTS.toggle()
@@ -240,16 +241,23 @@ public class UIScreen extends Screen {
                 "Hit Muffling", "", "%",
                 textRenderer, slider, true, true,
                 v -> {},
-                v -> {
-                    Settings.setFloat("muffle_amount", v / 100f);
-                    if (v < 10) message("hitsound muffling §cdisabled", "/hitreg metronome");
-                    else message("hitsound muffling §7set to §f" + v + "§7%", "/hitreg metronome " + v);
-                }
+                Commands::setMuffle
+        ));
+
+        widgets.add(new UISlider(
+                panelWidthCenter - sliderStart + 42,
+                panelHeightCenter - rowStart + verticalGap * 17,
+                panelWidthCenter - column1Start,
+                sliderWidth - 72, 0, 100, Settings.getFloat("sharpen_amount") * 100, sliderGap - 4, 5,
+                "Hit Sharpening", "", "%",
+                textRenderer, slider, true, true,
+                v -> {},
+                Commands::setSharpen
         ));
 
         widgets.add(new UISlider(
                 panelWidthCenter - sliderStart + 22,
-                panelHeightCenter - rowStart + verticalGap * 17,
+                panelHeightCenter - rowStart + verticalGap * 18,
                 panelWidthCenter - column1Start,
                 sliderWidth - 49, 9, 25, Settings.getInt("metronome"), sliderGap - 7, 1,
                 "Metronome", "", "t",
@@ -337,7 +345,7 @@ public class UIScreen extends Screen {
                 panelWidthCenter - column2Start,
                 panelHeightCenter - rowStart + verticalGap * 10,
                 10, horizontalGap,
-                textRenderer, "Render Target Hitbox",
+                textRenderer, "Show Target Hitbox",
                 checkbox, true,
                 Toggle.RENDER_HITBOX.toggled(),
                 checked -> Toggle.RENDER_HITBOX.toggle()
@@ -347,7 +355,7 @@ public class UIScreen extends Screen {
                 panelWidthCenter - column2Start,
                 panelHeightCenter - rowStart + verticalGap * 11,
                 10, horizontalGap,
-                textRenderer, "Render Target Cross",
+                textRenderer, "Show Target Cross",
                 checkbox, true,
                 Toggle.RENDER_CROSS.toggled(),
                 checked -> Toggle.RENDER_CROSS.toggle()
@@ -357,10 +365,70 @@ public class UIScreen extends Screen {
                 panelWidthCenter - column2Start,
                 panelHeightCenter - rowStart + verticalGap * 12,
                 10, horizontalGap,
-                textRenderer, "Render Reach Ring",
+                textRenderer, "Show Server Hitbox",
                 checkbox, true,
-                Toggle.RENDER_RING.toggled(),
-                checked -> Toggle.RENDER_RING.toggle()
+                Toggle.RENDER_SERVER_HITBOX.toggled(),
+                checked -> Toggle.RENDER_SERVER_HITBOX.toggle()
+        ));
+
+        widgets.add(new UICheckbox(
+                panelWidthCenter - column2Start,
+                panelHeightCenter - rowStart + verticalGap * 13,
+                10, horizontalGap,
+                textRenderer, "Show Your Hit Range",
+                checkbox, true,
+                Toggle.RENDER_YOUR_REACH.toggled(),
+                checked -> Toggle.RENDER_YOUR_REACH.toggle()
+        ));
+
+        widgets.add(new UICheckbox(
+                panelWidthCenter - column2Start,
+                panelHeightCenter - rowStart + verticalGap * 14,
+                10, horizontalGap,
+                textRenderer, "Show Their Hit Range",
+                checkbox, true,
+                Toggle.RENDER_THEIR_REACH.toggled(),
+                checked -> Toggle.RENDER_THEIR_REACH.toggle()
+        ));
+
+        widgets.add(new UICheckbox(
+                panelWidthCenter - column2Start,
+                panelHeightCenter - rowStart + verticalGap * 15,
+                10, horizontalGap,
+                textRenderer, "Show Your Jump Range",
+                checkbox, true,
+                Toggle.RENDER_YOUR_JUMP.toggled(),
+                checked -> Toggle.RENDER_YOUR_JUMP.toggle()
+        ));
+
+        widgets.add(new UICheckbox(
+                panelWidthCenter - column2Start,
+                panelHeightCenter - rowStart + verticalGap * 16,
+                10, horizontalGap,
+                textRenderer, "Show Their Jump Range",
+                checkbox, true,
+                Toggle.RENDER_THEIR_JUMP.toggled(),
+                checked -> Toggle.RENDER_THEIR_JUMP.toggle()
+        ));
+
+        widgets.add(new UICheckbox(
+                panelWidthCenter - column2Start,
+                panelHeightCenter - rowStart + verticalGap * 17,
+                10, horizontalGap,
+                textRenderer, "Perfect Hit Color",
+                checkbox, true,
+                Toggle.PERFECT_HIT_COLOR.toggled(),
+                checked -> Toggle.PERFECT_HIT_COLOR.toggle()
+        ));
+
+        widgets.add(new UICheckbox(
+                panelWidthCenter - column2Start,
+                panelHeightCenter - rowStart + verticalGap * 18,
+                10, horizontalGap,
+                textRenderer, "Jump Reset Color",
+                checkbox, true,
+                Toggle.JUMP_RESET_COLOR.toggled(),
+                checked -> Toggle.JUMP_RESET_COLOR.toggle()
         ));
     }
 

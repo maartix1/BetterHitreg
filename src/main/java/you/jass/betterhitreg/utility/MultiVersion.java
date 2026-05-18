@@ -47,7 +47,6 @@ import org.joml.Matrix4f;
 import you.jass.betterhitreg.ui.UIUtils;
 
 import java.awt.*;
-import java.net.URI;
 
 import static you.jass.betterhitreg.hitreg.Hitreg.client;
 
@@ -178,7 +177,7 @@ public class MultiVersion {
     }
 
     public static void message(String message, String command) {
-        boolean settingHitreg = command.contains("set");
+        boolean settingHitreg = !command.contains("reset") && command.contains("set");
         Text hoverText = Text.literal("§7Click to " + (settingHitreg ? "set" :  "toggle"));
         if (command.equals("/hitreg")) hoverText = Text.literal("§7Click to configure");
 

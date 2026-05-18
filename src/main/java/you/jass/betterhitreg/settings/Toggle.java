@@ -23,7 +23,13 @@ public enum Toggle {
     HIDE_OTHER_FIGHTS("hideOtherFights", "hide other fights", false),
     RENDER_HITBOX("renderHitbox", "render target hitbox", false),
     RENDER_CROSS("renderCross", "render target cross", false),
-    RENDER_RING("renderRing", "render reach ring", false);
+    RENDER_SERVER_HITBOX("RenderServerHitbox", "render server hitbox", false),
+    RENDER_YOUR_REACH("RenderYourReach", "render your reach", false),
+    RENDER_THEIR_REACH("RenderTheirReach", "render their reach", false),
+    RENDER_YOUR_JUMP("RenderYourJump", "render your jump range", false),
+    RENDER_THEIR_JUMP("RenderTheirJump", "render their jump range", false),
+    PERFECT_HIT_COLOR("PerfectHitColor", "color first tick hits", false),
+    JUMP_RESET_COLOR("JumpResetColor", "color jump resets", false);
 
     private final String key;
     private final String label;
@@ -59,7 +65,8 @@ public enum Toggle {
         switch (this) {
             case SAFE_REGS_ONLY -> MultiVersion.message("§7first hits " + (value ? "will no longer" : "will now") + " use custom hitreg", command);
             case IGNORE_SHIELD_HOLDERS -> MultiVersion.message("§7players with a shield (blocking or not) " + (value ? "will no longer" : "will now") + " be affected by custom hitreg", command);
-            case RENDER_HITBOX, RENDER_CROSS, RENDER_RING -> MultiVersion.message("§7colors can be edited via §fconfigs/Hitreg.properties §7in your minecraft instance folder", command);
+            case RENDER_HITBOX, RENDER_CROSS, RENDER_SERVER_HITBOX, RENDER_YOUR_REACH, RENDER_THEIR_REACH, RENDER_YOUR_JUMP, RENDER_THEIR_JUMP,
+                 PERFECT_HIT_COLOR, JUMP_RESET_COLOR -> MultiVersion.message("§7colors can be edited via §fconfigs/Hitreg.properties §7in your minecraft instance folder", command);
         }
 
         return value;

@@ -9,6 +9,7 @@
     "NetworkMixin",
     "DamageMixin",
     "EntityAccessor",
+    "GlowMixin",
     "NetworkMixin",
     "ParticleMixin",
     "PlayerMixin",

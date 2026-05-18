@@ -1,15 +1,12 @@
 package you.jass.betterhitreg.utility;
 
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.s2c.play.EntityAnimationS2CPacket;
 import net.minecraft.network.packet.s2c.play.EntityDamageS2CPacket;
 import net.minecraft.network.packet.s2c.play.PlaySoundS2CPacket;
-import net.minecraft.sound.SoundCategory;
 import you.jass.betterhitreg.hitreg.Hitreg;
 import you.jass.betterhitreg.settings.Toggle;
 
-import java.awt.*;
 import java.util.*;
 
 import static you.jass.betterhitreg.hitreg.Hitreg.alreadyAnimated;
@@ -59,6 +56,7 @@ public class PacketProcessor {
                 if (System.currentTimeMillis() - tookDamageTimestamp > 50) tookDamageTimestamp = System.currentTimeMillis() - 2;
 
                 lastAttacked = tookDamageTimestamp;
+                Hitreg.theirHits++;
                 processDelayedSounds(false);
             }
         }
@@ -70,6 +68,9 @@ public class PacketProcessor {
         if (lastTarget != getAnimationId(packet)) return true;
         boolean isToggled = isToggled();
         boolean withinFight = Hitreg.withinFight;
+
+        //swing hand
+        if (packet.getAnimationId() == 0 || packet.getAnimationId() == 3) Hitreg.theirSwings++;
 
         //crit particle
         if (packet.getAnimationId() == 4) {

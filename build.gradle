@@ -27,7 +27,7 @@ autoversion {
     archivesBaseName = 'BetterHitreg'
     minecraftVersion = '1.21.11'
     yarnMappings = 'auto'
-    loaderVersion = '0.16.0'
+    loaderVersion = 'auto'
     fabricVersion = 'auto'
 }
 
