@@ -18,9 +18,8 @@ apply plugin: AutoVersionPlugin
 //you may need to install the right java version for your IDE, you can do it at the top right gear in IntelliJ
 def targetJavaVersion = 21
 
-//set the minecraft & java versions, then run Tasks/build/build, it should be in the elephant on the right sidebar in IntelliJ
-//if the build fails, run it again after gradle is done importing, it's possible that gradle.properties didn't update fast enough
-//you can see gradles progress at the bottom right of IntelliJ, if the build still fails, try again in case gradle.properties still isn't updated
+//set the minecraft & java versions, then run Tasks/build/autoVersion, it should be in the elephant on the right sidebar in IntelliJ
+//after it finishes, run Tasks/build/build, this should build the desired version
 autoversion {
     modVersion = '1.0.6'
     mavenGroup = 'you.jass'
