@@ -16,6 +16,9 @@
   "entrypoints": {
     "main": [
       "you.jass.betterhitreg.BetterHitreg"
+    ],
+    "modmenu": [
+      "you.jass.betterhitreg.ModMenuConfig"
     ]
   },
   "mixins": [
